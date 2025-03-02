@@ -10,10 +10,20 @@
             background-color: #f4f4f4;
             color: #333;
         }
+        .banner {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
         .container {
             display: flex;
             max-width: 1200px;
-            margin: 20px auto;
+            margin: 60px auto 20px; /* Adjusted margin to account for fixed banner */
             padding: 20px;
             background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -58,9 +68,16 @@
             border-radius: 5px;
             background-color: #fafafa;
         }
+        .chart-container {
+            margin-top: 20px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <div class="banner" id="banner">
+        Buying Power: $50000.00 | Portfolio Value: $0.00 | Change: $0.00
+    </div>
     <div class="container">
         <div class="left">
             <h1>Stock Trading Game</h1>
@@ -78,15 +95,28 @@
         </div>
     </div>
     <script>
-        let buyingPower = 50000;
+        let initialBuyingPower = 50000;
+        let buyingPower = initialBuyingPower;
         let day = 1;
         let companies = [];
         let transactions = [];
         let portfolio = {};
         let totalProfit = 0;
+        let charts = {};
+
+        function updateBanner() {
+            let totalValue = 0;
+            for (const [company, quantity] of Object.entries(portfolio)) {
+                const companyData = companies.find(c => c.name === company);
+                totalValue += parseFloat(companyData.price) * quantity;
+            }
+            const change = (buyingPower + totalValue - initialBuyingPower).toFixed(2);
+            document.getElementById('banner').innerHTML = `Buying Power: $${buyingPower.toFixed(2)} | Portfolio Value: $${totalValue.toFixed(2)} | Change: $${change}`;
+        }
 
         function updateStatus() {
             document.getElementById('status').innerHTML = `Day ${day}<br>Buying Power: $${buyingPower.toFixed(2)}`;
+            updateBanner();
         }
 
         function updateCompanies() {
@@ -103,7 +133,35 @@
                             <input type="number" id="quantity-${company.name}" placeholder="Qty">
                             <button onclick="buyCustomStocks('${company.name}')">Buy Custom</button>
                         </div>
+                        <div class="chart-container">
+                            <canvas id="chart-${company.name}"></canvas>
+                        </div>
                     </div>`;
+                if (!charts[company.name]) {
+                    charts[company.name] = new Chart(document.getElementById(`chart-${company.name}`).getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: [day],
+                            datasets: [{
+                                label: `${company.name} Stock Price`,
+                                data: [company.price],
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    beginAtZero: true
+                                },
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
             });
         }
 
@@ -118,6 +176,7 @@
                 portfolioDiv.innerHTML += `<div>${company}: ${quantity} shares ($${value})</div>`;
             }
             portfolioDiv.innerHTML += `<div class="portfolio-stats">Total Portfolio Value: $${totalValue.toFixed(2)}</div>`;
+            updateBanner();
         }
 
         function updateStats() {
@@ -168,6 +227,9 @@
                 const stockPriceChange = (Math.random() * 9.8 - 4.9).toFixed(1);
                 company.price = (company.price * (1 + stockPriceChange / 100)).toFixed(2);
                 logMessage(`The stock price of ${company.name} changed by ${stockPriceChange}%.`);
+                charts[company.name].data.labels.push(day);
+                charts[company.name].data.datasets[0].data.push(company.price);
+                charts[company.name].update();
             });
             transactions.forEach(transaction => {
                 const company = companies.find(c => c.name === transaction.company);
