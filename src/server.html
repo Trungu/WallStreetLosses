@@ -41,6 +41,23 @@
         }
         .company button {
             margin: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .company button:nth-child(1) {
+            background-color: #4CAF50; /* Green */
+        }
+        .company button:nth-child(2) {
+            background-color: #2196F3; /* Blue */
+        }
+        .company button:nth-child(3) {
+            background-color: #f44336; /* Red */
+        }
+        .company button:nth-child(5) {
+            background-color: #ff9800; /* Orange */
         }
         .company input {
             width: 50px;
@@ -103,6 +120,19 @@
         let portfolio = {};
         let totalProfit = 0;
         let charts = {};
+        let newStocks = [
+            { name: 'Tesla', price: (Math.random() * 145 + 5).toFixed(1) },
+            { name: 'Netflix', price: (Math.random() * 145 + 5).toFixed(1) },
+            { name: 'Nvidia', price: (Math.random() * 145 + 5).toFixed(1) },
+            { name: 'Adobe', price: (Math.random() * 145 + 5).toFixed(1) }
+        ];
+
+        const possibleCompanies = ['Apple', 'Google', 'Microsoft', 'Amazon', 'Facebook', 'Tesla', 'Netflix', 'Nvidia', 'Adobe', 'Intel', 'AMD', 'IBM', 'Oracle', 'Salesforce', 'Uber'];
+
+        function getRandomCompanies(num) {
+            const shuffled = possibleCompanies.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, num).map(name => ({ name, price: (Math.random() * 145 + 5).toFixed(1) }));
+        }
 
         function updateBanner() {
             let totalValue = 0;
@@ -241,6 +271,13 @@
             });
             transactions = [];
             day++;
+            if ([2, 5, 10, 15].includes(day)) {
+                const newStock = newStocks.shift();
+                if (newStock) {
+                    companies.push(newStock);
+                    logMessage(`New stock added: ${newStock.name} at $${newStock.price}`);
+                }
+            }
             updateStatus();
             updateCompanies();
             updatePortfolio();
@@ -248,13 +285,7 @@
         }
 
         function initializeGame() {
-            companies = [
-                { name: 'Apple', price: (Math.random() * 145 + 5).toFixed(1) },
-                { name: 'Google', price: (Math.random() * 145 + 5).toFixed(1) },
-                { name: 'Microsoft', price: (Math.random() * 145 + 5).toFixed(1) },
-                { name: 'Amazon', price: (Math.random() * 145 + 5).toFixed(1) },
-                { name: 'Facebook', price: (Math.random() * 145 + 5).toFixed(1) }
-            ];
+            companies = getRandomCompanies(5);
             updateStatus();
             updateCompanies();
         }
