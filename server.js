@@ -1,8 +1,8 @@
-//i dont understand any of this, i'm sorry for whoever has to update this
-
+//i am geniuely sorry for whoever has to update this code
 const readline = require('readline');
 
 let buyingPower = 50000;
+let day = 1;
 
 function buyStocks(buyingPower, finalValue) {
     buyingPower -= finalValue;
@@ -42,15 +42,15 @@ function getCompanySet() {
     return companySet;
 }
 
-const companySet = getCompanySet();
+let companySet = getCompanySet();
 console.log(companySet);
 
-const companyArray = Array.from(companySet);
-const company1 = companyArray[0];
-const company2 = companyArray[1];
-const company3 = companyArray[2];
-const company4 = companyArray[3];
-const company5 = companyArray[4];
+let companyArray = Array.from(companySet);
+let company1 = companyArray[0];
+let company2 = companyArray[1];
+let company3 = companyArray[2];
+let company4 = companyArray[3];
+let company5 = companyArray[4];
 
 let company1TotalPrice = randomPrice();
 let company2TotalPrice = randomPrice();
@@ -74,55 +74,71 @@ function askQuestion(query) {
 }
 
 async function main() {
-    console.log(`Your buying power is $${buyingPower}`);
-    const company = await askQuestion('Which company do you want to buy stocks from? ');
-    const quantity = await askQuestion('How many stocks do you want to buy? ');
+    while (buyingPower >= 500) {
+        console.log(`Day ${day}`);
+        console.log(`Your buying power is $${buyingPower}`);
+        
+        let continueBuying = true;
+        while (continueBuying && buyingPower >= 500) {
+            const company = await askQuestion('Which company do you want to buy stocks from? ');
+            const quantity = await askQuestion('How many stocks do you want to buy? ');
 
-    let companyPrice;
-    switch (company) {
-        case company1:
-            companyPrice = company1TotalPrice;
-            break;
-        case company2:
-            companyPrice = company2TotalPrice;
-            break;
-        case company3:
-            companyPrice = company3TotalPrice;
-            break;
-        case company4:
-            companyPrice = company4TotalPrice;
-            break;
-        case company5:
-            companyPrice = company5TotalPrice;
-            break;
-        default:
-            console.log('Invalid company');
-            rl.close();
-            return;
+            let companyPrice;
+            switch (company) {
+                case company1:
+                    companyPrice = company1TotalPrice;
+                    break;
+                case company2:
+                    companyPrice = company2TotalPrice;
+                    break;
+                case company3:
+                    companyPrice = company3TotalPrice;
+                    break;
+                case company4:
+                    companyPrice = company4TotalPrice;
+                    break;
+                case company5:
+                    companyPrice = company5TotalPrice;
+                    break;
+                default:
+                    console.log('Invalid company');
+                    continue;
+            }
+
+            const totalPrice = calculatePrice(companyPrice, quantity);
+            if (totalPrice > buyingPower) {
+                console.log('Not enough buying power');
+                continue;
+            }
+
+            buyingPower = buyStocks(buyingPower, totalPrice);
+
+            const stockPriceChange = randomStockPrice();
+            const loss = totalPrice * (stockPriceChange / 100);
+            const finalValue = totalPrice + loss;
+
+            console.log(`You bought ${quantity} stocks of ${company} for $${totalPrice}.`);
+            console.log(`The stock price changed by ${stockPriceChange}%. You ${loss < 0 ? 'lost' : 'gained'} $${Math.abs(loss)}.`);
+            console.log(`Your remaining buying power is $${buyingPower}`);
+
+            const continueAnswer = await askQuestion('Do you want to continue buying stocks? (yes/no) ');
+            continueBuying = continueAnswer.toLowerCase() === 'yes';
+        }
+
+        updateStockPrices();
+        day++;
     }
 
-    const totalPrice = calculatePrice(companyPrice, quantity);
-    buyingPower = buyStocks(buyingPower, totalPrice);
-
-    const stockPriceChange = randomStockPrice();
-    const loss = totalPrice * (stockPriceChange / 100);
-    const finalValue = totalPrice + loss;
-
-    console.log(`You bought ${quantity} stocks of ${company} for $${totalPrice}.`);
-    console.log(`The stock price changed by ${stockPriceChange}%. You ${loss < 0 ? 'lost' : 'gained'} $${Math.abs(loss)}.`);
-    console.log(`Your remaining buying power is $${buyingPower}`);
-
+    console.log('You have less than $500. Game over.');
     rl.close();
 }
 
-main();
-
 function updateStockPrices() {
-    company1TotalPrice = randomPrice();
-    company2TotalPrice = randomPrice();
-    company3TotalPrice = randomPrice();
-    company4TotalPrice = randomPrice();
-    company5TotalPrice = randomPrice();
+    company1TotalPrice -= company1TotalPrice * (randomStockPrice() / 100);
+    company2TotalPrice -= company2TotalPrice * (randomStockPrice() / 100);
+    company3TotalPrice -= company3TotalPrice * (randomStockPrice() / 100);
+    company4TotalPrice -= company4TotalPrice * (randomStockPrice() / 100);
+    company5TotalPrice -= company5TotalPrice * (randomStockPrice() / 100);
 
     console.log('Updated stock prices:');
     console.log(company1, company1TotalPrice);
@@ -132,5 +148,5 @@ function updateStockPrices() {
     console.log(company5, company5TotalPrice);
 }
 
-// Simulate a new day every 24 hours (86400000 milliseconds)
-setInterval(updateStockPrices, 86400000);
+// Initial call to start the process
+main();
