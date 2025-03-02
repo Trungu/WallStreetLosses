@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trading Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .left, .right {
+            flex: 1;
+            padding: 20px;
+        }
+        .company {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .company button {
+            margin: 5px;
+        }
+        .company input {
+            width: 50px;
+            margin-left: 10px;
+        }
+        #actions {
+            margin-top: 20px;
+        }
+        #portfolio, #stats {
+            margin-top: 20px;
+        }
+        #log {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .portfolio-stats {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <h1>Stock Trading Game</h1>
+            <div id="status"></div>
+            <div id="companies"></div>
+            <div id="actions">
+                <button onclick="endDay()">End Day</button>
+            </div>
+            <div id="portfolio"></div>
+            <div id="log"></div>
+        </div>
+        <div class="right">
+            <h2>Stats</h2>
+            <div id="stats"></div>
+        </div>
+    </div>
+    <script>
+        let buyingPower = 50000;
+        let day = 1;
+        let companies = [];
+        let transactions = [];
+        let portfolio = {};
+        let totalProfit = 0;
+
+        function updateStatus() {
+            document.getElementById('status').innerHTML = `Day ${day}<br>Buying Power: $${buyingPower.toFixed(2)}`;
+        }
+
+        function updateCompanies() {
+            const companiesDiv = document.getElementById('companies');
+            companiesDiv.innerHTML = '';
+            companies.forEach(company => {
+                companiesDiv.innerHTML += `
+                    <div class="company">
+                        ${company.name}: $${parseFloat(company.price).toFixed(2)}
+                        <div>
+                            <button onclick="buyStocks('${company.name}', 1)">Buy 1</button>
+                            <button onclick="buyStocks('${company.name}', 5)">Buy 5</button>
+                            <button onclick="buyStocks('${company.name}', 10)">Buy 10</button>
+                            <input type="number" id="quantity-${company.name}" placeholder="Qty">
+                            <button onclick="buyCustomStocks('${company.name}')">Buy Custom</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function updatePortfolio() {
+            const portfolioDiv = document.getElementById('portfolio');
+            portfolioDiv.innerHTML = '<h2>Portfolio</h2>';
+            let totalValue = 0;
+            for (const [company, quantity] of Object.entries(portfolio)) {
+                const companyData = companies.find(c => c.name === company);
+                const value = (companyData.price * quantity).toFixed(2);
+                totalValue += parseFloat(value);
+                portfolioDiv.innerHTML += `<div>${company}: ${quantity} shares ($${value})</div>`;
+            }
+            portfolioDiv.innerHTML += `<div class="portfolio-stats">Total Portfolio Value: $${totalValue.toFixed(2)}</div>`;
+        }
+
+        function updateStats() {
+            const statsDiv = document.getElementById('stats');
+            const averageProfit = transactions.length ? (totalProfit / transactions.length).toFixed(2) : 0;
+            statsDiv.innerHTML = `
+                <div>Total Profit: $${totalProfit.toFixed(2)}</div>
+                <div>Average Profit per Transaction: $${averageProfit}</div>
+            `;
+        }
+
+        function logMessage(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div>${message}</div>`;
+        }
+
+        function buyStocks(companyName, quantity) {
+            const company = companies.find(c => c.name === companyName);
+            if (!company) {
+                logMessage('Invalid company');
+                return;
+            }
+            const totalPrice = parseFloat(company.price) * quantity;
+            if (totalPrice > buyingPower) {
+                logMessage('Not enough buying power');
+                return;
+            }
+            buyingPower -= totalPrice;
+            transactions.push({ company: company.name, quantity, totalPrice });
+            portfolio[company.name] = (portfolio[company.name] || 0) + quantity;
+            logMessage(`You bought ${quantity} stocks of ${company.name} for $${totalPrice.toFixed(2)}.`);
+            updateStatus();
+            updatePortfolio();
+            updateStats();
+        }
+
+        function buyCustomStocks(companyName) {
+            const quantity = parseInt(document.getElementById(`quantity-${companyName}`).value);
+            if (isNaN(quantity) || quantity <= 0) {
+                logMessage('Invalid quantity');
+                return;
+            }
+            buyStocks(companyName, quantity);
+        }
+
+        function endDay() {
+            companies.forEach(company => {
+                const stockPriceChange = (Math.random() * 9.8 - 4.9).toFixed(1);
+                company.price = (company.price * (1 + stockPriceChange / 100)).toFixed(2);
+                logMessage(`The stock price of ${company.name} changed by ${stockPriceChange}%.`);
+            });
+            transactions.forEach(transaction => {
+                const company = companies.find(c => c.name === transaction.company);
+                const stockPriceChange = (Math.random() * 9.8 - 4.9).toFixed(1);
+                const loss = transaction.totalPrice * (stockPriceChange / 100);
+                const finalValue = transaction.totalPrice + loss;
+                totalProfit += loss;
+                logMessage(`The stock price of ${transaction.company} changed by ${stockPriceChange}%. You ${loss < 0 ? 'lost' : 'gained'} $${Math.abs(loss).toFixed(2)}.`);
+            });
+            transactions = [];
+            day++;
+            updateStatus();
+            updateCompanies();
+            updatePortfolio();
+            updateStats();
+        }
+
+        function initializeGame() {
+            companies = [
+                { name: 'Apple', price: (Math.random() * 145 + 5).toFixed(1) },
+                { name: 'Google', price: (Math.random() * 145 + 5).toFixed(1) },
+                { name: 'Microsoft', price: (Math.random() * 145 + 5).toFixed(1) },
+                { name: 'Amazon', price: (Math.random() * 145 + 5).toFixed(1) },
+                { name: 'Facebook', price: (Math.random() * 145 + 5).toFixed(1) }
+            ];
+            updateStatus();
+            updateCompanies();
+        }
+
+        initializeGame();
+    </script>
+</body>
+</html>

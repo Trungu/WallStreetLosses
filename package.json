@@ -1,0 +1,24 @@
+{
+  "name": "wallstreetlosses",
+  "version": "1.0.0",
+  "description": "inverse stock market app",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Trungu/WallStreetLosses.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Trungu/WallStreetLosses/issues"
+  },
+  "homepage": "https://github.com/Trungu/WallStreetLosses#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
